@@ -1,4 +1,4 @@
-package com.lodesistemas.manutecoes;
+package com.lodesistemas.manutencoes;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

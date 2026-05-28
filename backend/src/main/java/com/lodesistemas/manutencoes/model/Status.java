@@ -1,4 +1,4 @@
-package com.lodesistemas.manutecoes.model;
+package com.lodesistemas.manutencoes.model;
 
 public enum Status {
     OPERACIONAL,
