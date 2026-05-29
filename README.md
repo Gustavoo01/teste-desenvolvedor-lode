@@ -58,6 +58,76 @@ npm run dev
 
 Aplicação disponível em `http://localhost:5173`.
 
+## Endpoints
+
+| Método | Rota                              | Descrição              |
+|--------|-----------------------------------|------------------------|
+| GET    | `/api/equipamentos`               | Lista todos            |
+| GET    | `/api/equipamentos/{id}`          | Busca por ID           |
+| POST   | `/api/equipamentos`               | Cria equipamento       |
+| PUT    | `/api/equipamentos/{id}`          | Atualiza equipamento   |
+| PATCH  | `/api/equipamentos/{id}/status`   | Altera apenas o status |
+| DELETE | `/api/equipamentos/{id}`          | Remove equipamento     |
+
+### Exemplo de payload
+
+```json
+{
+  "nome": "Bomba Submersa 01",
+  "tipo": "Bomba",
+  "dataInstalacao": "2024-03-15",
+  "status": "OPERACIONAL"
+}
+```
+
+Valores válidos para `status`: `OPERACIONAL`, `MANUTENCAO_NECESSARIA`, `CRITICO`.
+
+## Decisões técnicas
+
+### Backend
+
+- **Camada de serviço separada do controller**: a lógica de negócio (incluindo alteração de status) vive no `EquipamentoService`, facilitando testes unitários sem subir o contexto do Spring.
+- **Bean Validation (`@NotBlank`) na entidade**: regras de validação declarativas, validadas automaticamente pelo Spring no `@RequestBody` e cobertas por teste unitário direto na API do `jakarta.validation`.
+- **Enum com `EnumType.STRING`**: o status é armazenado como texto no banco, mantendo legibilidade e evitando que alterações na ordem do enum quebrem dados existentes.
+- **`@RestControllerAdvice` para tratamento de erros**: erros de validação retornam `400 Bad Request` com um mapa `{campo: mensagem}` claro pro frontend consumir.
+- **CORS configurado por controller**: liberado apenas para `http://localhost:5173` em desenvolvimento.
+
+### Frontend
+
+- **Componentização**: header, footer, card e formulário extraídos como componentes independentes com props/emits bem definidos.
+- **Composables como serviços globais**: `useEquipamentos` (chamadas à API), `useToast` (notificações) e `useConfirm` (confirmações) centralizam estado e lógica reutilizável — padrão equivalente a serviços `providedIn: 'root'` do Angular.
+- **Confirmação baseada em Promise**: o `useConfirm` retorna `Promise<boolean>`, permitindo `await` no fluxo do chamador sem callbacks aninhados.
+- **Validação dupla**: o formulário valida no cliente antes de enviar, e o backend valida novamente via Bean Validation — defesa em profundidade.
+- **Feedback visual por status**: cores distintas por estado (verde/amarelo/vermelho) tanto na borda do card quanto no badge.
+
+### Testes
+
+Dois testes unitários cobrem os requisitos da Atividade 3:
+
+1. **`naoDeveCadastrarSemNome`**: usa a API do `jakarta.validation` diretamente, garantindo que a restrição `@NotBlank` produz uma `ConstraintViolation` no campo `nome`.
+2. **`deveAlterarStatus`**: usa Mockito pra mockar o repositório e valida que `alterarStatus` atualiza o campo corretamente e persiste a mudança.
+
+## Estrutura do projeto
+
+```
+lode-manutencoes/
+├── backend/
+│   └── src/
+│       ├── main/java/com/lodesistemas/manutencoes/
+│       │   ├── controller/
+│       │   ├── service/
+│       │   ├── repository/
+│       │   ├── model/
+│       │   └── exception/
+│       └── test/java/com/lodesistemas/manutencoes/
+│           └── service/
+└── frontend/
+    └── src/
+        ├── components/
+        ├── composables/
+        └── services/
+```
+
 ## Respostas — Avaliação de Perfil
 
 ### 1. Análise: Ao receber um bug report informando que "os dados não aparecem na tela",qual seria sua sequência lógica de investigação (do frontend ao banco)?
