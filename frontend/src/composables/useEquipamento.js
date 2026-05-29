@@ -1,10 +1,12 @@
 import { ref } from "vue";
 import api from "../services/api";
+import { useToast } from "./useToast";
 
 export function useEquipamentos() {
   const equipamentos = ref([]);
   const carregando = ref(false);
   const erro = ref(null);
+  const toast = useToast();
 
   async function carregar() {
     carregando.value = true;
@@ -14,6 +16,7 @@ export function useEquipamentos() {
       equipamentos.value = data;
     } catch (e) {
       erro.value = "Erro ao carregar equipamentos";
+      toast.erro("Não foi possível carregar os equipamentos");
       console.error(e);
     } finally {
       carregando.value = false;

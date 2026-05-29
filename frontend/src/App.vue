@@ -5,6 +5,10 @@ import AppFooter from './components/AppFooter.vue'
 import EquipamentoCard from './components/EquipamentoCard.vue'
 import EquipamentoForm from './components/EquipamentoForm.vue'
 import { useEquipamentos } from './composables/useEquipamento'
+import ToastContainer from './components/ToastContainer.vue'
+import { useToast } from './composables/useToast'
+
+const toast = useToast()
 
 const { equipamentos, carregando, erro, carregar, criar, atualizar, remover } = useEquipamentos()
 
@@ -34,12 +38,15 @@ async function salvar(dados) {
   try {
     if (dados.id) {
       await atualizar(dados.id, dados)
+      toast.sucesso('Equipamento atualizado com sucesso!')
     } else {
       await criar(dados)
+      toast.sucesso('Equipamento criado com sucesso!')
     }
     modalAberto.value = false
   } catch (e) {
-    alert('Erro ao salvar: ' + (e.response?.data?.nome || e.message))
+    const mensagem = e.response?.data?.nome || e.message || 'Erro ao salvar equipamento'
+    toast.erro(mensagem)
   }
 }
 
@@ -47,8 +54,9 @@ async function confirmarRemocao(equipamento) {
   if (!confirm(`Remover "${equipamento.nome}"?`)) return
   try {
     await remover(equipamento.id)
+    toast.sucesso(`"${equipamento.nome}" removido.`)
   } catch (e) {
-    alert('Erro ao remover: ' + e.message)
+    toast.erro('Erro ao remover equipamento')
   }
 }
 </script>
@@ -75,6 +83,7 @@ async function confirmarRemocao(equipamento) {
   <AppFooter />
 
   <EquipamentoForm v-model="modalAberto" :equipamento="equipamentoEditando" @salvar="salvar" />
+  <ToastContainer />
 </template>
 
 <style>
