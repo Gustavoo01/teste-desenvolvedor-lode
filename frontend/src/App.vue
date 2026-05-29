@@ -7,10 +7,13 @@ import EquipamentoForm from './components/EquipamentoForm.vue'
 import { useEquipamentos } from './composables/useEquipamento'
 import ToastContainer from './components/ToastContainer.vue'
 import { useToast } from './composables/useToast'
-
-const toast = useToast()
+import ConfirmDialog from './components/ConfirmDialog.vue'
+import { useConfirm } from './composables/useConfirm'
 
 const { equipamentos, carregando, erro, carregar, criar, atualizar, remover } = useEquipamentos()
+
+const { confirmar } = useConfirm()
+const toast = useToast()
 
 const busca = ref('')
 const modalAberto = ref(false)
@@ -51,7 +54,15 @@ async function salvar(dados) {
 }
 
 async function confirmarRemocao(equipamento) {
-  if (!confirm(`Remover "${equipamento.nome}"?`)) return
+  const ok = await confirmar({
+    titulo: 'Remover equipamento',
+    mensagem: `Tem certeza que deseja remover "${equipamento.nome}"? Esta ação não pode ser desfeita.`,
+    textoConfirmar: 'Remover',
+    tipoConfirmacao: 'perigo'
+  })
+
+  if (!ok) return
+
   try {
     await remover(equipamento.id)
     toast.sucesso(`"${equipamento.nome}" removido.`)
@@ -83,20 +94,32 @@ async function confirmarRemocao(equipamento) {
   <AppFooter />
 
   <EquipamentoForm v-model="modalAberto" :equipamento="equipamentoEditando" @salvar="salvar" />
+  <ConfirmDialog />
   <ToastContainer />
 </template>
 
 <style>
+html,
 body {
   margin: 0;
+  height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #f5f7fa;
 }
 
-.container {
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main.container {
+  flex: 1;
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
+  box-sizing: border-box;
 }
 
 .toolbar {
